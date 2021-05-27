@@ -2,6 +2,7 @@
 from bitstring import BitStream
 import spiceypy as spice
 
+# Versio 0.1.0
 
 class PacketId:
     def __init__(self,data):
