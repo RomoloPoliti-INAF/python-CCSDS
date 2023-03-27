@@ -1,0 +1,22 @@
+[project]
+name = "CCSDSpy"
+version = "0.1.0"
+dependencies = [
+    "rich",
+    "bitstring",
+    "spiceypy",
+    'importlib-metadata; python_version>"3.9"',
+]
+
+authors = [{name="Romolo Politi", email ="romolo.politi@gmail.com" }]
+license = {text = "GNU GPL ver3"}
+readme = "README.md"
+
+
+[project.optional-dependencies]
+docs = ["sphinx"]
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

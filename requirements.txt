@@ -1,0 +1,3 @@
+rich
+bitstring
+spiceypy

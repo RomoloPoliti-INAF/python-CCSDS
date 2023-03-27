@@ -1,0 +1,9 @@
+rich
+bitstring
+spiceypy
+
+[:python_version > "3.9"]
+importlib-metadata
+
+[docs]
+sphinx
