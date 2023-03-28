@@ -1,17 +1,20 @@
-# CCSDSpy
+# PyCCSDS
 
 ---
 
-CCSDSpy is a library to read a data packet coming from a space mission that follows the Consultative Committee for Space Data Systems (CCSDS) standard
+PyCCSDS is a library to read a data packet coming from a space mission that follows the Consultative Committee for Space Data Systems (CCSDS) standard
 
 Current version **0.1.0**
 
 [[_TOC_]]
 
 ## Installation
+```shell
+python3 -m pip install Python-CCSDS
+```
 ## Usage
 ```python
-from CCSDS import CCSDS
+from PyCCSDS.ccsds import CCSDS
 
 dat = CCSDS('BepiColombo',packet)
 ```
@@ -72,4 +75,4 @@ classDiagram
 ```
 
 ![TM packet](docs/TM_Packet_Header.png "Telemetry packet")
-####Figure 1 - Telemetry Packet
+#### Figure 1 - Telemetry Packet

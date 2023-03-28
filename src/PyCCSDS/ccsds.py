@@ -94,6 +94,8 @@ class CCSDS:
         if type(missionID) is str:
             if missionID.lower() == 'bepicolombo':
                 missionID=-121
+            elif missionID.lower() == 'juice':
+                missionID=-29
             else:
                 if t0 == None:
                     print("WARNING: the Mission name is not valid. time converte setted to 1970-01-01 00:00:00")

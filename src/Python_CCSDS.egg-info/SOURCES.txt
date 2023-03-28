@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+src/PyCCSDS/__init__.py
+src/PyCCSDS/ccsds.py
+src/Python_CCSDS.egg-info/PKG-INFO
+src/Python_CCSDS.egg-info/SOURCES.txt
+src/Python_CCSDS.egg-info/dependency_links.txt
+src/Python_CCSDS.egg-info/requires.txt
+src/Python_CCSDS.egg-info/top_level.txt

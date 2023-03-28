@@ -1,5 +1,5 @@
 [project]
-name = "CCSDSpy"
+name = "Python-CCSDS"
 version = "0.1.0"
 dependencies = [
     "rich",
@@ -11,6 +11,8 @@ dependencies = [
 authors = [{name="Romolo Politi", email ="romolo.politi@gmail.com" }]
 license = {text = "GNU GPL ver3"}
 readme = "README.md"
+keywords =['python','ccsds','nasa','esa','packets']
+descriprion = 'Python library to read the CCSDS packets'
 
 
 [project.optional-dependencies]
