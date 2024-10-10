@@ -3,32 +3,71 @@ from bitstring import BitStream
 import spiceypy as spice
 from datetime import datetime, timedelta
 from rich.console import Console
+from PyCCSDS.dic2table import dict2table
+import types
 
 
-class PacketId:
+__version__ = "0.2.0"
+dateFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
+missions = {"bepicolombo": -121, "juice": -29}
+
+
+def isclass(obj):
+    """Return true if the obj is a class.
+
+    Class objects provide these attributes:
+        __doc__         documentation string
+        __module__      name of module in which this class was defined"""
+        
+    
+    return hasattr(obj,'serialize') and callable(obj.serialize) 
+
+
+class Seriazable:
+    def serialize(self)->dict:
+        ret={}
+        for item in self.__dict__.items():
+            if isclass(item[1]):
+                ret[item[0]]=item[1].serialize()
+            else:
+                ret[item[0]]=item[1]
+        return ret
+
+class PacketType(Seriazable):
+    
+    def __init__(self,tp):
+        self.type = tp
+        if tp == 0:
+            self.typeName = "Telemetry"
+        else:
+            self.typeName = "Telecommand"
+        pass
+    
+    def __str__(self):
+        return self.typeName
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
+class PacketId(Seriazable):
     def __init__(self,data):
         pID = BitStream(hex=data).unpack('uint: 3, 2*bin: 1, bits: 11')
         self.VersionNum = pID[0]
-        self.packetType = pID[1]
+        self.packetType = PacketType(int(pID[1]))
         self.dataFieldHeaderFlag = pID[2]
         self.Apid = pID[3].uint
         self.Pid = pID[3][0:7].uint
         self.Pcat = pID[3][7:].uint
-        pass
-    def serialize(self):
-        return [self.VersionNum, self.packetType, self.dataFieldHeaderFlag,
-                self.Apid, self.Pid, self.Pcat]
 
-class SeqControl:
+
+class SeqControl(Seriazable):
     def __init__(self,data):
         sq = BitStream(hex=data).unpack('bin:2,uint:14')
         self.SegmentationFlag = sq[0]
         self.SSC = sq[1]
 
-    def serialize(self):
-        return [self.SegmentationFlag, self.SSC]
 
-class SourcePacketHeader:
+class SourcePacketHeader(Seriazable):
     def __init__(self,data):
         # Read the Source Packet Header(48 bits)
         # - Packet ID (16 bits)
@@ -43,14 +82,13 @@ class SourcePacketHeader:
         self.packetLength = BitStream(hex=data[8:12]).unpack('uint:16')[0]+1
         # Based on BepiColombo SIMBIO-SYS
         # ref: BC-SIM-GAF-IC-002 pag. 48
-    def serialize(self):
-        return [*self.packetId.serialize(), *self.sequeceControl.serialize(), self.packetLength]
 
-class DataFieldHeader:
+
+class DataFieldHeader(Seriazable):
     def __init__(self,data,missionID,t0):
         # Read The Data Field Header (80 bit)
         dfhData = BitStream(hex=data).unpack('bin:1,uint:3,bin:4,3*uint:8,uint:1,uint:31,uint:16')
-        self.pusVersion = dfhData[1]
+        self.pusVersion = int(dfhData[1])
         self.ServiceType = dfhData[3]
         self.ServiceSubType = dfhData[4]
         self.DestinationId = dfhData[5]
@@ -61,19 +99,15 @@ class DataFieldHeader:
         if self.Synchronization == 0:
             self.UTCTime = self.scet2UTC(missionID,t0)
         else:
-            self.UTCTime = '1970-01-01T00:00:00.00000Z'
+            self.UTCTime = datetime.strptime('1970-01-01T00:00:00.00000Z', dateFormat)
         pass
 
-    def serialize(self):
-        return [self.pusVersion, self.ServiceType, self.ServiceSubType,
-                self.DestinationId, self.SCET, self.UTCTime]
-
+    
     def scet2UTC(self,missionID,t0):
         if t0 == None:
             et = spice.scs2e(missionID, "{}.{}".format(self.CorseTime, self.FineTime))
             ScTime = spice.et2utc(et, 'ISOC', 5)
         else:
-            dateFormat = "%Y-%m-%dT%H:%M:%S.%f"
             dt=datetime.strptime(t0,dateFormat)
             sc = self.CorseTime + self.FineTime*(2**(-16))
             f=dt+timedelta(seconds=sc)
@@ -88,18 +122,20 @@ class PackeDataField:
         self.Data = data[20:]
         pass  
 
+
 class CCSDS:
     """ Reader for the CCSDS header """
-    def __init__(self, missionID, data,console:Console=None,t0= None):
-        if type(missionID) is str:
-            if missionID.lower() == 'bepicolombo':
-                missionID=-121
-            elif missionID.lower() == 'juice':
-                missionID=-29
-            else:
-                if t0 == None:
-                    print("WARNING: the Mission name is not valid. time converte setted to 1970-01-01 00:00:00")
-                    t0 = "1970-01-01T00:00:00"
+    def __init__(self, missionName, data,console:Console=Console(),t0= None):
+        # Check Mission id and Name
+        if isinstance(missionName, str):
+            if missionName.lower() not in missions:
+                console.print(f"WARNING: the Mission name is not valid. time converte setted to 1970-01-01 00:00:00",style="bold red")
+                t0 = datetime.strptime("1970-01-01T00:00:00.0000Z", dateFormat)
+            missionID=missions.get(missionName.lower(),None)
+        else:
+            missionID=missionName
+        self.console=console
+        self.missionName=missionName
         # Source Packet Header
         self.SPH = SourcePacketHeader(data[0:12])
         # Packet Data Field
@@ -109,3 +145,17 @@ class CCSDS:
         self.subService=self.PDF.DFHeader.ServiceSubType
         self.Data=self.PDF.Data
 
+    def __str__(self)->str:
+        return f"{self.missionName.title()} - APID: {self.APID} - {'TM(' if self.SPH.packetId.packetType.type == 0 else 'TC('}{self.Service},{self.subService}) - Data: {self.Data}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def show(self):
+        from rich.panel import Panel
+        from rich.columns import Columns
+        c=Columns([Panel(dict2table(self.SPH.serialize()),title="Source Packet Header", border_style='magenta'),
+                   Panel(dict2table(self.PDF.DFHeader.serialize(),reset=True),title="Data Field Header",border_style="magenta"),],
+                  expand=False,equal=False)
+        p=Panel(c,title=self.__str__(),style='yellow', expand=False)
+        return p 

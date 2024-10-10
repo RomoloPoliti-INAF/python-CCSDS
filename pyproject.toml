@@ -2,10 +2,19 @@
 name = "Python-CCSDS"
 version = "0.1.0"
 keywords =['python','ccsds','nasa','esa','packets']
-descriprion = 'Python library to read the CCSDS packets'
+description = 'Python library to read the CCSDS packets'
 authors = ["Romolo Politi <romolo.politi@inaf.it>"]
-license = "GNU GPL ver3"
+license = "GPL-3.0-or-later"
 readme = "README.md"
+packages=[{include = "PyCCSDS", from = "src"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
