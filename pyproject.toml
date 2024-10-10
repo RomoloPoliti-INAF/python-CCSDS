@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Python-CCSDS"
-version = "0.1.0"
+version = "0.2.0"
 keywords =['python','ccsds','nasa','esa','packets']
 description = 'Python library to read the CCSDS packets'
 authors = ["Romolo Politi <romolo.politi@inaf.it>"]
